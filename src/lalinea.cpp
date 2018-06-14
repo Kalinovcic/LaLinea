@@ -354,15 +354,15 @@ void lk_client_frame(LK_Platform* platform)
 
     if ((target_modelview[0*4+0] * target_modelview[1*4+1] - target_modelview[0*4+1] * target_modelview[1*4+0]) == 0)
     {
-        float px1 = 10000 * modelview[0*4+0] + 20000 * modelview[1*4+0] + modelview[3*4+0];
-        float py1 = 10000 * modelview[0*4+1] + 20000 * modelview[1*4+1] + modelview[3*4+1];
-        float pw1 = 10000 * modelview[0*4+3] + 20000 * modelview[1*4+3] + modelview[3*4+3];
+        float px1 = 10000 * target_modelview[0*4+0] + 20000 * target_modelview[1*4+0] + target_modelview[3*4+0];
+        float py1 = 10000 * target_modelview[0*4+1] + 20000 * target_modelview[1*4+1] + target_modelview[3*4+1];
+        float pw1 = 10000 * target_modelview[0*4+3] + 20000 * target_modelview[1*4+3] + target_modelview[3*4+3];
         px1 /= pw1;
         py1 /= pw1;
 
-        float px2 = -20000 * modelview[0*4+0] + -10000 * modelview[1*4+0] + modelview[3*4+0];
-        float py2 = -20000 * modelview[0*4+1] + -10000 * modelview[1*4+1] + modelview[3*4+1];
-        float pw2 = -20000 * modelview[0*4+3] + -10000 * modelview[1*4+3] + modelview[3*4+3];
+        float px2 = -20000 * target_modelview[0*4+0] + -10000 * target_modelview[1*4+0] + target_modelview[3*4+0];
+        float py2 = -20000 * target_modelview[0*4+1] + -10000 * target_modelview[1*4+1] + target_modelview[3*4+1];
+        float pw2 = -20000 * target_modelview[0*4+3] + -10000 * target_modelview[1*4+3] + target_modelview[3*4+3];
         px2 /= pw2;
         py2 /= pw2;
 
