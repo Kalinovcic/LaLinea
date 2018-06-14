@@ -2,5 +2,5 @@ include         src
 exclude         src/libraries/GL
 obj_output      build/release
 cl_options      -Zo -O2 -MT -MP -Gm- -fp:fast -fp:except- -we4239 -GR- -EHa- -GS- -D_CRT_SECURE_NO_WARNINGS -DGLEW_STATIC
-link_options    -nologo -incremental:no -opt:ref -subsystem:console -out:run_tree/LaLinea.exe
+link_options    -nologo -incremental:no -opt:ref -subsystem:windows -out:run_tree/LaLinea.exe
 libraries       kernel32.lib user32.lib gdi32.lib shell32.lib opengl32.lib glu32.lib shlwapi.lib lib/glew32s.lib
