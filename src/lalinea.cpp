@@ -189,6 +189,8 @@ void parse_control()
     points.clear();
     while (*string && sscanf(string, "%s%n", command, &bytes_read))
     {
+        if (!command[0]) break;
+
         string += bytes_read;
         if (!strcmp(command, "transform"))
         {
@@ -220,6 +222,8 @@ void parse_control()
 
             points.push_back({ point[0], point[1] });
         }
+
+        command[0] = 0;
     }
 }
 
@@ -315,6 +319,9 @@ void lk_client_frame(LK_Platform* platform)
     {
         float px = p.x * modelview[0*4+0] + p.y * modelview[1*4+0] + modelview[3*4+0];
         float py = p.x * modelview[0*4+1] + p.y * modelview[1*4+1] + modelview[3*4+1];
+        float pw = p.x * modelview[0*4+3] + p.y * modelview[1*4+3] + modelview[3*4+3];
+        px /= pw;
+        py /= pw;
 
         glColor3f(1, 0, 0);
         glBegin(GL_LINES);
