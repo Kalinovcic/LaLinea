@@ -204,13 +204,13 @@ void parse_control()
             animation_time = 0;
             target_modelview[0*4+0] = input_matrix[0*3+0];
             target_modelview[0*4+1] = input_matrix[1*3+0];
-            target_modelview[0*4+2] = input_matrix[2*3+0];
+            target_modelview[0*4+3] = input_matrix[2*3+0];
             target_modelview[1*4+0] = input_matrix[0*3+1];
             target_modelview[1*4+1] = input_matrix[1*3+1];
-            target_modelview[1*4+2] = input_matrix[2*3+1];
-            target_modelview[2*4+0] = input_matrix[0*3+2];
-            target_modelview[2*4+1] = input_matrix[1*3+2];
-            target_modelview[2*4+2] = input_matrix[2*3+2];
+            target_modelview[1*4+3] = input_matrix[2*3+1];
+            target_modelview[3*4+0] = input_matrix[0*3+2];
+            target_modelview[3*4+1] = input_matrix[1*3+2];
+            target_modelview[3*4+3] = input_matrix[2*3+2];
         }
         else if (!strcmp(command, "point"))
         {
@@ -313,8 +313,8 @@ void lk_client_frame(LK_Platform* platform)
 
     for (Point p : points)
     {
-        float px = p.x * modelview[0*4+0] + p.y * modelview[1*4+0] + modelview[2*4+0];
-        float py = p.x * modelview[0*4+1] + p.y * modelview[1*4+1] + modelview[2*4+1];
+        float px = p.x * modelview[0*4+0] + p.y * modelview[1*4+0] + modelview[3*4+0];
+        float py = p.x * modelview[0*4+1] + p.y * modelview[1*4+1] + modelview[3*4+1];
 
         glColor3f(1, 0, 0);
         glBegin(GL_LINES);
