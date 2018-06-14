@@ -192,7 +192,20 @@ void parse_control()
         if (!command[0]) break;
 
         string += bytes_read;
-        if (!strcmp(command, "transform"))
+        if (!strcmp(command, "identity"))
+        {
+            memset(source_modelview, 0, sizeof(source_modelview));
+            memset(target_modelview, 0, sizeof(target_modelview));
+            source_modelview[0*4+0] = 1;
+            source_modelview[1*4+1] = 1;
+            source_modelview[2*4+2] = 1;
+            source_modelview[3*4+3] = 1;
+            target_modelview[0*4+0] = 1;
+            target_modelview[1*4+1] = 1;
+            target_modelview[2*4+2] = 1;
+            target_modelview[3*4+3] = 1;
+        }
+        else if (!strcmp(command, "transform"))
         {
             float input_matrix[9];
             sscanf(string, "%f%f%f%f%f%f%f%f%f%n", input_matrix + 0, input_matrix + 1, input_matrix + 2,
@@ -336,6 +349,27 @@ void lk_client_frame(LK_Platform* platform)
             float y = py + cosf(i / 100.0f * 6.28318530718f) * 0.4f;
             glVertex2f(x, y);
         }
+        glEnd();
+    }
+
+    if ((target_modelview[0*4+0] * target_modelview[1*4+1] - target_modelview[0*4+1] * target_modelview[1*4+0]) == 0)
+    {
+        float px1 = 10000 * modelview[0*4+0] + 20000 * modelview[1*4+0] + modelview[3*4+0];
+        float py1 = 10000 * modelview[0*4+1] + 20000 * modelview[1*4+1] + modelview[3*4+1];
+        float pw1 = 10000 * modelview[0*4+3] + 20000 * modelview[1*4+3] + modelview[3*4+3];
+        px1 /= pw1;
+        py1 /= pw1;
+
+        float px2 = -20000 * modelview[0*4+0] + -10000 * modelview[1*4+0] + modelview[3*4+0];
+        float py2 = -20000 * modelview[0*4+1] + -10000 * modelview[1*4+1] + modelview[3*4+1];
+        float pw2 = -20000 * modelview[0*4+3] + -10000 * modelview[1*4+3] + modelview[3*4+3];
+        px2 /= pw2;
+        py2 /= pw2;
+
+        glColor3f(1, 1, 1);
+        glBegin(GL_LINES);
+        glVertex2f(px1, py1);
+        glVertex2f(px2, py2);
         glEnd();
     }
 }
