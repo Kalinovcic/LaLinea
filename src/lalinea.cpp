@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <shlwapi.h>
 
+#include <vector>
+
 #include "libraries/GL/glew.h"
 
 #define LK_PLATFORM_IMPLEMENTATION
@@ -149,6 +151,78 @@ void lk_client_init(LK_Platform* platform)
     platform->opengl.stencil_bits  = 0;
 }
 
+u8* current_file;
+
+float animation_time = 0;
+
+float source_modelview[] = {
+    1, 0, 0, 0,
+    0, 1, 0, 0,
+    0, 0, 1, 0,
+    0, 0, 0, 1
+};
+
+float target_modelview[] = {
+    1, 0, 0, 0,
+    0, 1, 0, 0,
+    0, 0, 1, 0,
+    0, 0, 0, 1
+};
+
+float modelview[16];
+
+struct Point
+{
+    float x;
+    float y;
+};
+
+std::vector<Point> points;
+
+void parse_control()
+{
+    char* string = (char*) current_file;
+
+    static char command[128];
+    int bytes_read;
+
+    points.clear();
+    while (*string && sscanf(string, "%s%n", command, &bytes_read))
+    {
+        string += bytes_read;
+        if (!strcmp(command, "transform"))
+        {
+            float input_matrix[9];
+            sscanf(string, "%f%f%f%f%f%f%f%f%f%n", input_matrix + 0, input_matrix + 1, input_matrix + 2,
+                                                   input_matrix + 3, input_matrix + 4, input_matrix + 5,
+                                                   input_matrix + 6, input_matrix + 7, input_matrix + 8,
+                                                   &bytes_read);
+
+            string += bytes_read;
+
+            memcpy(source_modelview, target_modelview, sizeof(source_modelview));
+            animation_time = 0;
+            target_modelview[0*4+0] = input_matrix[0*3+0];
+            target_modelview[0*4+1] = input_matrix[1*3+0];
+            target_modelview[0*4+2] = input_matrix[2*3+0];
+            target_modelview[1*4+0] = input_matrix[0*3+1];
+            target_modelview[1*4+1] = input_matrix[1*3+1];
+            target_modelview[1*4+2] = input_matrix[2*3+1];
+            target_modelview[2*4+0] = input_matrix[0*3+2];
+            target_modelview[2*4+1] = input_matrix[1*3+2];
+            target_modelview[2*4+2] = input_matrix[2*3+2];
+        }
+        else if (!strcmp(command, "point"))
+        {
+            float point[2];
+            sscanf(string, "%f%f%n", point, point + 1, &bytes_read);
+            string += bytes_read;
+
+            points.push_back({ point[0], point[1] });
+        }
+    }
+}
+
 LK_CLIENT_EXPORT
 void lk_client_frame(LK_Platform* platform)
 {
@@ -157,6 +231,25 @@ void lk_client_frame(LK_Platform* platform)
         glewExperimental = true;
         glewInit();
     }
+
+    u8* file = read_entire_file("control.txt");
+    if (file && (!current_file || strcmp((const char*) file, (const char*) current_file)))
+    {
+        free(current_file);
+        current_file = file;
+        parse_control();
+    }
+
+    animation_time += lk_platform.time.delta_seconds * 0.3f;
+    if (animation_time > 1)
+        animation_time = 1;
+
+    for (int i = 0; i < 16; i++)
+    {
+        float t = animation_time * animation_time * (3 - 2 * animation_time);
+        modelview[i] = t * target_modelview[i] + (1 - t) * source_modelview[i];
+    }
+
 
     glViewport(0, 0, lk_platform.window.width, lk_platform.window.height);
     glClearColor(0.125, 0.125, 0.125, 1);
@@ -169,16 +262,8 @@ void lk_client_frame(LK_Platform* platform)
     glLoadIdentity();
     glOrtho(-w*0.5f, w*0.5f, -h*0.5f, h*0.5f, -1, 1);
 
-    float shear_matrix[] = {
-        0.977568548, -0.210617505, 0, 0,
-        0.210617505, 0.977568548, 0, 0,
-        0, 0, 1, 0,
-        0, 0, 0, 1
-    };
-
     glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    glLoadMatrixf(shear_matrix);
+    glLoadMatrixf(modelview);
 
     glBegin(GL_QUADS);
     for (int xi = -200; xi < 200; xi++)
@@ -191,7 +276,7 @@ void lk_client_frame(LK_Platform* platform)
             float r = (ri < 15) ? (ri / 15.0f) : (1 - (ri - 15) / 15.0f);
             float g = (gi < 15) ? (gi / 15.0f) : (1 - (gi - 15) / 15.0f);
 
-            glColor3f(r, 1, g);
+            glColor3f(r * 0.9, 0.9, g * 0.9);
             glVertex2f(xi,     yi);
             glVertex2f(xi + 1, yi);
             glVertex2f(xi + 1, yi + 1);
@@ -200,12 +285,52 @@ void lk_client_frame(LK_Platform* platform)
     glEnd();
 
     glLoadIdentity();
+
     glLineWidth(5);
     glBegin(GL_LINES);
-    glColor3f(1, 0, 0);
+    glColor3f(1, 0, 1);
     glVertex2f(-200, 0); glVertex2f(200, 0);
     glVertex2f(0, -200); glVertex2f(0, 200);
     glEnd();
+
+    for (Point p : points)
+    {
+        glColor3f(1, 0.5, 0);
+        glBegin(GL_LINES);
+        glVertex2f(0, 0);
+        glVertex2f(p.x, p.y);
+        glEnd();
+
+        glBegin(GL_POLYGON);
+        for (int i = 0; i < 100; i++)
+        {
+            float x = p.x + sinf(i / 100.0f * 6.28318530718f) * 0.4f;
+            float y = p.y + cosf(i / 100.0f * 6.28318530718f) * 0.4f;
+            glVertex2f(x, y);
+        }
+        glEnd();
+    }
+
+    for (Point p : points)
+    {
+        float px = p.x * modelview[0*4+0] + p.y * modelview[1*4+0] + modelview[2*4+0];
+        float py = p.x * modelview[0*4+1] + p.y * modelview[1*4+1] + modelview[2*4+1];
+
+        glColor3f(1, 0, 0);
+        glBegin(GL_LINES);
+        glVertex2f(0, 0);
+        glVertex2f(px, py);
+        glEnd();
+
+        glBegin(GL_POLYGON);
+        for (int i = 0; i < 100; i++)
+        {
+            float x = px + sinf(i / 100.0f * 6.28318530718f) * 0.4f;
+            float y = py + cosf(i / 100.0f * 6.28318530718f) * 0.4f;
+            glVertex2f(x, y);
+        }
+        glEnd();
+    }
 }
 
 }
